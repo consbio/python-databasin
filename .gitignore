@@ -1,1 +1,3 @@
 *.pyc
+build/
+python_databasin.egg-info/
