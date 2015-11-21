@@ -5,6 +5,7 @@ import pytest
 import requests_mock
 
 from databasin.client import Client
+from databasin.exceptions import LoginRequiredError, ForbiddenError
 
 
 @pytest.fixture()
@@ -34,6 +35,24 @@ def test_get_dataset(dataset_data):
         assert m.called
         assert dataset.tags == dataset_data['tags']
         assert dataset.credits is None
+
+
+def test_get_dataset_login_required():
+    with requests_mock.mock() as m:
+        m.get('http://databasin.org/api/v1/datasets/a1b2c3/', status_code=401)
+
+        c = Client()
+        with pytest.raises(LoginRequiredError):
+            c.get_dataset('a1b2c3')
+
+def test_get_dataset_forbidden():
+    with requests_mock.mock() as m:
+        m.get('http://databasin.org/api/v1/datasets/a1b2c3/', status_code=401)
+
+        c = Client()
+        c.username = 'foo'
+        with pytest.raises(ForbiddenError):
+            c.get_dataset('a1b2c3')
 
 
 def test_list_datasets(dataset_data):
@@ -100,8 +119,25 @@ def test_datasets_with_filter():
 
         c = Client()
         datasets = c.list_datasets({'private': False})
-
         list(datasets)
+
         assert m.called
         assert m.request_history[0].qs == {'private': ['false']}
+
+
+def test_my_datasets():
+    with requests_mock.mock() as m:
+        data = {
+            'meta': {'next': None, 'total_count': 0},
+            'objects': []
+        }
+        m.get('http://databasin.org/api/v1/datasets/?owner_id=foo', text=json.dumps(data))
+
+        c = Client()
+        c.username = 'foo'
+        datasets = c.list_my_datasets()
+        list(datasets)
+
+        assert m.called
+        assert m.request_history[0].qs == {'owner_id': ['foo']}
 
