@@ -1,13 +1,13 @@
 import six
 from requests import Session
 from requests.adapters import HTTPAdapter
-from requests.exceptions import HTTPError
 from restle.exceptions import HTTPException
 
 import databasin
 from databasin.datasets import DatasetResource, DatasetListResource
 from databasin.exceptions import LoginError
 from databasin.jobs import JobResource
+from databasin.uploads import TemporaryFileResource, TEMPORARY_FILE_DETAIL_PATH
 from databasin.utils import ResourcePaginator, raise_for_authorization
 
 # IDE inspection trips over these as imports
@@ -20,11 +20,15 @@ DEFAULT_HOST = 'databasin.org'
 JOB_CREATE_PATH = '/api/v1/jobs/'
 JOB_DETAIL_PATH = '/api/v1/jobs/{id}/'
 LOGIN_PATH = '/auth/login_iframe/'
+TEMPORARY_FILE_UPLOAD_PATH = '/uploads/upload-temporary-file/'
 
 
 class RefererHTTPAdapter(HTTPAdapter):
     def add_headers(self, request, **kwargs):
-        request.headers['referer'] = request.url
+        request.headers['Referer'] = request.url
+
+        if request.method.lower() == 'post' and 'csrftoken' in request._cookies:
+            request.headers['X-CSRFToken'] = request._cookies['csrftoken']
 
 
 class Client(object):
@@ -93,6 +97,20 @@ class Client(object):
         try:
             return JobResource.get(
                 self.build_url(JOB_DETAIL_PATH.format(id=job_id)), session=self._session, lazy=False
+            )
+        except HTTPException as e:
+            raise_for_authorization(e.response, self.username is not None)
+            raise
+
+    def upload_temporary_file(self, f, filename=None):
+        return TemporaryFileResource.upload(
+            self.build_url(TEMPORARY_FILE_UPLOAD_PATH), f, filename=filename, session=self._session
+        )
+
+    def get_temporary_file(self, uuid):
+        try:
+            return TemporaryFileResource.get(
+                self.build_url(TEMPORARY_FILE_DETAIL_PATH.format(uuid=uuid)), session=self._session, lazy=False
             )
         except HTTPException as e:
             raise_for_authorization(e.response, self.username is not None)

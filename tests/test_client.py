@@ -20,7 +20,7 @@ def test_https_referer():
     r = c._session.prepare_request(Request('POST', LOGIN_URL))
     c._session.get_adapter(LOGIN_URL).add_headers(r)
 
-    assert r.headers['referer'] == LOGIN_URL
+    assert r.headers['Referer'] == LOGIN_URL
 
 
 def test_login():

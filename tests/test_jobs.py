@@ -9,10 +9,10 @@ import six
 from databasin.client import Client
 from databasin.exceptions import LoginRequiredError, ForbiddenError
 
-if six.PY3:
-    from unittest import mock
-else:
-    import mock
+try:
+    from unittest import mock  # Py3
+except ImportError:
+    import mock  # Py2
 
 
 @pytest.fixture
