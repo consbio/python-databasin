@@ -26,7 +26,7 @@ class JobResource(Resource):
             'job_args': job_args
         }
         r = session.post(url, json=data)
-        raise_for_authorization(r, session.client.username is not None)
+        raise_for_authorization(r, hasattr(session, 'client') and session.client.username is not None)
         r.raise_for_status()
 
         return cls.get(r.headers['Location'], session=session)

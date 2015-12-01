@@ -1,5 +1,8 @@
+import requests
 from restle import fields
 from restle.resources import Resource
+
+from databasin.utils import raise_for_authorization
 
 
 class DatasetResource(Resource):
@@ -10,7 +13,6 @@ class DatasetResource(Resource):
     snippet = fields.TextField(default='')
     create_date = fields.TextField()  # Todo: replace with `DateTimeField` when available
     modify_date = fields.TextField()  # Todo: replace with `DateTimeField` when available
-    subtitle = fields.TextField(required=False)
     thumbnail_url = fields.TextField(required=False)
     credits = fields.TextField(required=False)
     citation = fields.TextField(required=False)
@@ -34,3 +36,40 @@ class DatasetResource(Resource):
 class DatasetListResource(Resource):
     meta = fields.ObjectField('meta')
     objects = fields.ToManyField(DatasetResource, nest_type='full')
+
+
+class DatasetImportResource(Resource):
+    id = fields.TextField()
+    owner_id = fields.TextField()
+    private = fields.BooleanField()
+    title = fields.TextField()
+    description = fields.TextField()
+    create_date = fields.TextField()  # Todo: replace with `DateTimeField` when available
+    modify_date = fields.TextField()  # Todo: replace with `DateTimeField` when available
+    thumbnail_url = fields.TextField(required=False)
+    credits = fields.TextField(required=False)
+    citation = fields.TextField(required=False)
+    spatial_resolution = fields.TextField(required=False)
+    use_constraints = fields.TextField(required=False)
+    file_size = fields.IntegerField(required=False)
+    uncompressed_size = fields.IntegerField(required=False)
+    peer_reviewed = fields.IntegerField(required=False)
+    native = fields.BooleanField()
+    contact_organization = fields.TextField(required=False)
+    contact_persons = fields.TextField(required=False)
+    is_dataset_edit = fields.BooleanField()
+    failed = fields.BooleanField()
+    can_download = fields.BooleanField(default=False)
+    tags = fields.ObjectField()
+    ext_download_path = fields.TextField(required=False)
+    aggregate_auto_updates = fields.BooleanField('agg_auto_updates', required=False)
+
+    def cancel(self):
+        r = requests.delete(self._url)
+        raise_for_authorization(r, hasattr(self._session, 'client') and self._session.client.username is not None)
+        r.raise_for_status()
+
+
+class DatasetImportListResource(Resource):
+    meta = fields.ObjectField('meta')
+    objects = fields.ToManyField(DatasetImportResource, nest_type='full')

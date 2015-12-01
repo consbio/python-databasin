@@ -4,7 +4,7 @@ from requests.adapters import HTTPAdapter
 from restle.exceptions import HTTPException
 
 import databasin
-from databasin.datasets import DatasetResource, DatasetListResource
+from databasin.datasets import DatasetResource, DatasetListResource, DatasetImportListResource, DatasetImportResource
 from databasin.exceptions import LoginError
 from databasin.jobs import JobResource
 from databasin.uploads import TemporaryFileResource, TEMPORARY_FILE_DETAIL_PATH, TemporaryFileListResource
@@ -15,13 +15,15 @@ urljoin = six.moves.urllib_parse.urljoin
 urlencode = six.moves.urllib_parse.urlencode
 
 DATASET_DETAIL_PATH = '/api/v1/datasets/{id}/'
+DATASET_IMPORT_DETAIL_PATH = '/api/v1/dataset_imports/{id}/'
+DATASET_IMPORT_LIST_PATH = '/api/v1/dataset_imports/'
 DATASET_LIST_PATH = '/api/v1/datasets/'
 DEFAULT_HOST = 'databasin.org'
 JOB_CREATE_PATH = '/api/v1/jobs/'
 JOB_DETAIL_PATH = '/api/v1/jobs/{id}/'
 LOGIN_PATH = '/auth/login_iframe/'
+TEMPORARY_FILE_LIST_PATH = '/api/v1/uploads/temporary-files/'
 TEMPORARY_FILE_UPLOAD_PATH = '/uploads/upload-temporary-file/'
-TEMPORARY_FILES_LIST_PATH = '/api/v1/uploads/temporary-files/'
 
 
 class RefererHTTPAdapter(HTTPAdapter):
@@ -87,6 +89,22 @@ class Client(object):
             raise_for_authorization(e.response, self.username is not None)
             raise
 
+    def list_imports(self, filters={}):
+        url = self.build_url(DATASET_IMPORT_LIST_PATH)
+        if filters:
+            url += '?{0}'.format(urlencode(filters))
+
+        return ResourcePaginator(DatasetImportListResource.get(url, session=self._session, lazy=False))
+
+    def get_import(self, import_id):
+        try:
+            return DatasetImportResource.get(
+                self.build_url(DATASET_IMPORT_DETAIL_PATH.format(id=import_id)), session=self._session, lazy=False
+            )
+        except HTTPException as e:
+            raise_for_authorization(e.response, self.username is not None)
+            raise
+
     def create_job(self, name, job_args={}, block=False):
         job = JobResource.create(self.build_url(JOB_CREATE_PATH), name=name, job_args=job_args, session=self._session)
         if block:
@@ -110,7 +128,7 @@ class Client(object):
 
     def list_temporary_files(self):
         return ResourcePaginator(
-            TemporaryFileListResource.get(self.build_url(TEMPORARY_FILES_LIST_PATH), session=self._session, lazy=False)
+            TemporaryFileListResource.get(self.build_url(TEMPORARY_FILE_LIST_PATH), session=self._session, lazy=False)
         )
 
     def get_temporary_file(self, uuid):
