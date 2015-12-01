@@ -52,3 +52,8 @@ class TemporaryFileResource(Resource):
         finally:
             if should_close:
                 f.close()
+
+
+class TemporaryFileListResource(Resource):
+    meta = fields.ObjectField('meta')
+    objects = fields.ToManyField(TemporaryFileResource, nest_type='full')

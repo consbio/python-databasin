@@ -7,7 +7,7 @@ import databasin
 from databasin.datasets import DatasetResource, DatasetListResource
 from databasin.exceptions import LoginError
 from databasin.jobs import JobResource
-from databasin.uploads import TemporaryFileResource, TEMPORARY_FILE_DETAIL_PATH
+from databasin.uploads import TemporaryFileResource, TEMPORARY_FILE_DETAIL_PATH, TemporaryFileListResource
 from databasin.utils import ResourcePaginator, raise_for_authorization
 
 # IDE inspection trips over these as imports
@@ -21,6 +21,7 @@ JOB_CREATE_PATH = '/api/v1/jobs/'
 JOB_DETAIL_PATH = '/api/v1/jobs/{id}/'
 LOGIN_PATH = '/auth/login_iframe/'
 TEMPORARY_FILE_UPLOAD_PATH = '/uploads/upload-temporary-file/'
+TEMPORARY_FILES_LIST_PATH = '/api/v1/uploads/temporary-files/'
 
 
 class RefererHTTPAdapter(HTTPAdapter):
@@ -105,6 +106,11 @@ class Client(object):
     def upload_temporary_file(self, f, filename=None):
         return TemporaryFileResource.upload(
             self.build_url(TEMPORARY_FILE_UPLOAD_PATH), f, filename=filename, session=self._session
+        )
+
+    def list_temporary_files(self):
+        return ResourcePaginator(
+            TemporaryFileListResource.get(self.build_url(TEMPORARY_FILES_LIST_PATH), session=self._session, lazy=False)
         )
 
     def get_temporary_file(self, uuid):

@@ -4,8 +4,6 @@ import json
 import pytest
 import requests_mock
 
-import six
-
 from databasin.client import Client
 from databasin.exceptions import LoginRequiredError, ForbiddenError
 

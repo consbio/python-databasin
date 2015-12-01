@@ -1,3 +1,4 @@
+import copy
 import json
 
 import pytest
@@ -88,4 +89,26 @@ def test_get_temporary_file_login_required(tmp_file_data):
 
         with pytest.raises(LoginRequiredError):
             tmp_file = c.get_temporary_file('1234')
+
+
+def test_list_temporary_files(tmp_file_data):
+    data = {
+        'meta': {'next': None, 'total_count': 2},
+        'objects': [
+            tmp_file_data,
+            copy.copy(tmp_file_data)
+        ]
+    }
+    data['objects'][1]['uuid'] = 1235
+
+    with requests_mock.mock() as m:
+        m.get('http://databasin.org/api/v1/uploads/temporary-files/', text=json.dumps(data))
+
+        c = Client()
+        tmp_files = c.list_temporary_files()
+
+        assert len(tmp_files) == 2
+        tmp_files = list(tmp_files)
+        assert tmp_files[0].uuid == '1234'
+        assert tmp_files[1].uuid == '1235'
 
