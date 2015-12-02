@@ -27,7 +27,7 @@ setup(
     keywords='data basin',
     version=databasin.__version__,
     packages=['databasin'],
-    requires=['six', 'requests', 'restle'],
+    install_requires=['six', 'requests', 'restle'],
     url='https://github.com/consbio/python-databasin',
     license='BSD',
     tests_require=['pytest', 'requests-mock>=0.7.0', 'mock'],
