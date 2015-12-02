@@ -1,4 +1,4 @@
-# python-databasin 0.1.0
+# python-databasin 0.2.0
 
 [![Build Status](https://travis-ci.org/consbio/python-databasin.png?branch=master)](https://travis-ci.org/consbio/python-databasin)
 
