@@ -65,7 +65,7 @@ class DatasetImportResource(Resource):
     aggregate_auto_updates = fields.BooleanField('agg_auto_updates', required=False)
 
     def cancel(self):
-        r = requests.delete(self._url)
+        r = self._session.delete(self._url)
         raise_for_authorization(r, hasattr(self._session, 'client') and self._session.client.username is not None)
         r.raise_for_status()
 

@@ -30,6 +30,6 @@ setup(
     requires=['six', 'requests', 'restle'],
     url='https://github.com/consbio/python-databasin',
     license='BSD',
-    tests_require=['pytest', 'requests-mock', 'mock'],
+    tests_require=['pytest', 'requests-mock>=0.7.0', 'mock'],
     cmdclass={'test': PyTest}
 )

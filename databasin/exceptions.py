@@ -17,3 +17,9 @@ class ForbiddenError(HTTPError):
     """Raised when the client is logged in, but is not allowed to perform the requested action."""
 
     pass
+
+
+class DatasetImportError(Exception):
+    """Raised in response to an import failure."""
+
+    pass

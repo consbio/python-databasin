@@ -63,6 +63,7 @@ def test_get_dataset_login_required():
         with pytest.raises(LoginRequiredError):
             c.get_dataset('a1b2c3')
 
+
 def test_get_dataset_forbidden():
     with requests_mock.mock() as m:
         m.get('http://databasin.org/api/v1/datasets/a1b2c3/', status_code=401)
