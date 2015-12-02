@@ -9,8 +9,9 @@ install:
   - "pip install requests-mock"
   - "pip install mock"
   - "pip install coveralls"
+  - "pip install pytest-cov"
 
-script: "py.test ."
+script: "py.test . --cov databasin --cov-report term-missing"
 
 after_success:
   - coveralls
