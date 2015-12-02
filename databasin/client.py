@@ -75,18 +75,21 @@ class Client(object):
 
         self.username = username
 
-    def list_datasets(self, filters={}):
-        url = self.build_url(DATASET_LIST_PATH)
-        if filters:
-            url += '?{0}'.format(urlencode(filters))
+    def list_datasets(self, filters={}, items_per_page=100):
+        filters['limit'] = items_per_page
+        url = '{0}?{1}'.format(self.build_url(DATASET_LIST_PATH), urlencode(filters))
 
         return ResourcePaginator(DatasetListResource.get(url, session=self._session, lazy=False))
 
-    def list_my_datasets(self):
+    def list_my_datasets(self, **kwargs):
         if not self.username:
             return []
 
-        return self.list_datasets({'owner_id': self.username})
+        filters = kwargs.get('filters', {})
+        filters['owner_id'] = self.username
+        kwargs['filters'] = filters
+
+        return self.list_datasets(**kwargs)
 
     def get_dataset(self, dataset_id):
         try:

@@ -169,7 +169,7 @@ def test_datasets_with_filter():
         list(datasets)
 
         assert m.called
-        assert m.request_history[0].qs == {'private': ['false']}
+        assert m.request_history[0].qs['private'] == ['false']
 
 
 def test_my_datasets():
@@ -186,7 +186,7 @@ def test_my_datasets():
         list(datasets)
 
         assert m.called
-        assert m.request_history[0].qs == {'owner_id': ['foo']}
+        assert m.request_history[0].qs['owner_id'] == ['foo']
 
 
 def test_get_dataset_import(dataset_import_data):
