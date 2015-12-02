@@ -130,24 +130,24 @@ def test_import_netcdf_dataset_with_zip(import_job_data, dataset_data, tmp_file_
         m.get('http://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
         m.get('http://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
-        with six.BytesIO() as f:
-            with zipfile.ZipFile(f, 'w') as zf:
-                zf.writestr('test.nc', '')
-                zf.writestr('style.json', '')
-            f.seek(0)
+        f = six.BytesIO()
+        with zipfile.ZipFile(f, 'w') as zf:
+            zf.writestr('test.nc', '')
+            zf.writestr('style.json', '')
+        f.seek(0)
 
-            with mock.patch.object(builtins, 'open', mock.Mock(return_value=f)) as open_mock:
-                c = Client()
-                c._session.cookies['csrftoken'] = 'abcd'
-                dataset = c.import_netcdf_dataset('test.zip')
+        with mock.patch.object(builtins, 'open', mock.Mock(return_value=f)) as open_mock:
+            c = Client()
+            c._session.cookies['csrftoken'] = 'abcd'
+            dataset = c.import_netcdf_dataset('test.zip')
 
-                open_mock.assert_called_once_with('test.zip', 'a+b')
-                assert m.call_count == 5
-                assert dataset.id == 'a1b2c3'
-                request_data = json.loads(m.request_history[2].text)
-                assert request_data['job_name'] == 'create_import_job'
-                assert request_data['job_args']['file'] == 'abcd'
-                assert request_data['job_args']['dataset_type'] == 'NetCDF_Native'
+            open_mock.assert_called_once_with('test.zip', 'a+b')
+            assert m.call_count == 5
+            assert dataset.id == 'a1b2c3'
+            request_data = json.loads(m.request_history[2].text)
+            assert request_data['job_name'] == 'create_import_job'
+            assert request_data['job_args']['file'] == 'abcd'
+            assert request_data['job_args']['dataset_type'] == 'NetCDF_Native'
 
 
 def test_import_netcdf_dataset_with_nc(import_job_data, dataset_data, tmp_file_data):
@@ -179,17 +179,17 @@ def test_import_netcdf_dataset_with_invalid_file():
 
 
 def test_import_netcdf_dataset_with_no_style():
-    with six.BytesIO() as f:
-        with zipfile.ZipFile(f, 'w') as zf:
-            zf.writestr('test.nc', '')
-        f.seek(0)
+    f = six.BytesIO()
+    with zipfile.ZipFile(f, 'w') as zf:
+        zf.writestr('test.nc', '')
+    f.seek(0)
 
-        with mock.patch.object(builtins, 'open', mock.Mock(return_value=f)) as open_mock:
-            c = Client()
-            c._session.cookies['csrftoken'] = 'abcd'
+    with mock.patch.object(builtins, 'open', mock.Mock(return_value=f)) as open_mock:
+        c = Client()
+        c._session.cookies['csrftoken'] = 'abcd'
 
-            with pytest.raises(ValueError):
-                c.import_netcdf_dataset('test.zip')
+        with pytest.raises(ValueError):
+            c.import_netcdf_dataset('test.zip')
 
 
 def test_import_netcdf_dataset_incomplete(import_job_data, tmp_file_data, dataset_import_data):
@@ -204,17 +204,17 @@ def test_import_netcdf_dataset_incomplete(import_job_data, tmp_file_data, datase
         m.get('http://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
         m.delete('http://databasin.org/api/v1/dataset_imports/a1b2c3/')
 
-        with six.BytesIO() as f:
-            with zipfile.ZipFile(f, 'w') as zf:
-                zf.writestr('test.nc', '')
-                zf.writestr('style.json', '')
-            f.seek(0)
+        f = six.BytesIO()
+        with zipfile.ZipFile(f, 'w') as zf:
+            zf.writestr('test.nc', '')
+            zf.writestr('style.json', '')
+        f.seek(0)
 
-            with mock.patch.object(builtins, 'open', mock.Mock(return_value=f)) as open_mock:
-                c = Client()
-                c._session.cookies['csrftoken'] = 'abcd'
+        with mock.patch.object(builtins, 'open', mock.Mock(return_value=f)) as open_mock:
+            c = Client()
+            c._session.cookies['csrftoken'] = 'abcd'
 
-                with pytest.raises(DatasetImportError):
-                    c.import_netcdf_dataset('test.zip')
+            with pytest.raises(DatasetImportError):
+                c.import_netcdf_dataset('test.zip')
 
-                assert m.call_count == 6
+            assert m.call_count == 6
