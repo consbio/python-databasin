@@ -74,6 +74,34 @@ def test_get_dataset_forbidden():
             c.get_dataset('a1b2c3')
 
 
+def test_dataset_make_public(dataset_data):
+    with requests_mock.mock() as m:
+        m.get('http://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
+        m.patch('http://databasin.org/api/v1/datasets/a1b2c3/')
+
+        c = Client()
+        dataset = c.get_dataset('a1b2c3')
+        dataset.make_public()
+
+        assert m.call_count == 2
+        request_data = json.loads(m.request_history[1].text)
+        assert request_data['private'] == False
+
+
+def test_dataset_make_private(dataset_data):
+    with requests_mock.mock() as m:
+        m.get('http://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
+        m.patch('http://databasin.org/api/v1/datasets/a1b2c3/')
+
+        c = Client()
+        dataset = c.get_dataset('a1b2c3')
+        dataset.make_private()
+
+        assert m.call_count == 2
+        request_data = json.loads(m.request_history[1].text)
+        assert request_data['private'] == True
+
+
 def test_list_datasets(dataset_data):
     with requests_mock.mock() as m:
         data = {

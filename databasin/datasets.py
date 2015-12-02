@@ -1,4 +1,3 @@
-import requests
 from restle import fields
 from restle.resources import Resource
 
@@ -31,6 +30,17 @@ class DatasetResource(Resource):
     tags = fields.ObjectField()
     ext_download_path = fields.TextField(required=False)
     version = fields.IntegerField(default=1)
+
+    def _set_private(self, private):
+        r = self._session.patch(self._url, json={'private': private})
+        raise_for_authorization(r, hasattr(self._session, 'client') and self._session.client.username is not None)
+        r.raise_for_status()
+
+    def make_public(self):
+        self._set_private(False)
+
+    def make_private(self):
+        self._set_private(True)
 
 
 class DatasetListResource(Resource):
