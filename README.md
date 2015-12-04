@@ -8,3 +8,23 @@
 ```bash
 $ pip install python-databasin
 ```
+
+# Example usage
+The code snippet below will import a NetCDF dataset into Data Basin and make it public. Note that the account you use 
+must have import permission and the import must have complete metadata and style information.
+
+```python
+from databasin.client import Client
+
+c = Client()
+c.login('user', 'pass')
+
+# Package must have complete metadata and style necessary for one-step import
+dataset = c.import_netcdf_dataset('/path/to/netcdf_with_metadata_and_style.zip')
+
+# One-step imports are private by default
+dataset.make_public()
+
+print(dataset.id)
+print(dataset.title)
+```
