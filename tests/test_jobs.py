@@ -27,11 +27,11 @@ def job_data():
 def test_create_job(job_data):
     with requests_mock.mock() as m:
         m.post(
-            'http://databasin.org/api/v1/jobs/',
-            headers={'Location': 'http://databasin.org/api/v1/jobs/1234/'},
+            'https://databasin.org/api/v1/jobs/',
+            headers={'Location': 'https://databasin.org/api/v1/jobs/1234/'},
             status_code=201
         )
-        m.get('http://databasin.org/api/v1/jobs/1234/', text=json.dumps(job_data))
+        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(job_data))
 
         c = Client()
         job = c.create_job('foo_job', job_args={'foo': 'bar'})
@@ -45,7 +45,7 @@ def test_create_job(job_data):
 
 def test_create_job_login_required():
     with requests_mock.mock() as m:
-        m.post('http://databasin.org/api/v1/jobs/', status_code=401)
+        m.post('https://databasin.org/api/v1/jobs/', status_code=401)
 
         c = Client()
         with pytest.raises(LoginRequiredError):
@@ -54,7 +54,7 @@ def test_create_job_login_required():
 
 def test_create_job_forbidden():
     with requests_mock.mock() as m:
-        m.post('http://databasin.org/api/v1/jobs/', status_code=401)
+        m.post('https://databasin.org/api/v1/jobs/', status_code=401)
 
         c = Client()
         c.username = 'foo'
@@ -64,7 +64,7 @@ def test_create_job_forbidden():
 
 def test_get_job(job_data):
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/jobs/1234/', text=json.dumps(job_data))
+        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(job_data))
 
         c = Client()
         job = c.get_job('1234')
@@ -82,7 +82,7 @@ def test_job_refresh(job_data):
     })
 
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/jobs/1234/', [
+        m.get('https://databasin.org/api/v1/jobs/1234/', [
             {'text': json.dumps(job_data)},
             {'text': json.dumps(job_data_2)}
         ])
@@ -108,11 +108,11 @@ def test_job_block(job_data):
 
     with requests_mock.mock() as m:
         m.post(
-            'http://databasin.org/api/v1/jobs/',
-            headers={'Location': 'http://databasin.org/api/v1/jobs/1234/'},
+            'https://databasin.org/api/v1/jobs/',
+            headers={'Location': 'https://databasin.org/api/v1/jobs/1234/'},
             status_code=201
         )
-        m.get('http://databasin.org/api/v1/jobs/1234/', [
+        m.get('https://databasin.org/api/v1/jobs/1234/', [
             {'text': json.dumps(job_data)},
             {'text': json.dumps(job_data)},
             {'text': json.dumps(job_data)},
@@ -136,7 +136,7 @@ def test_job_join(job_data):
     job_data_2['status'] = 'succeeded'
 
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/jobs/1234/', [
+        m.get('https://databasin.org/api/v1/jobs/1234/', [
             {'text': json.dumps(job_data)},
             {'text': json.dumps(job_data)},
             {'text': json.dumps(job_data)},

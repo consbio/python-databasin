@@ -44,7 +44,7 @@ def dataset_import_data():
 
 def test_get_dataset(dataset_data):
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
+        m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
         c = Client()
         dataset = c.get_dataset('a1b2c3')
@@ -57,7 +57,7 @@ def test_get_dataset(dataset_data):
 
 def test_get_dataset_login_required():
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/datasets/a1b2c3/', status_code=401)
+        m.get('https://databasin.org/api/v1/datasets/a1b2c3/', status_code=401)
 
         c = Client()
         with pytest.raises(LoginRequiredError):
@@ -66,7 +66,7 @@ def test_get_dataset_login_required():
 
 def test_get_dataset_forbidden():
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/datasets/a1b2c3/', status_code=401)
+        m.get('https://databasin.org/api/v1/datasets/a1b2c3/', status_code=401)
 
         c = Client()
         c.username = 'foo'
@@ -76,8 +76,8 @@ def test_get_dataset_forbidden():
 
 def test_dataset_make_public(dataset_data):
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
-        m.patch('http://databasin.org/api/v1/datasets/a1b2c3/')
+        m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
+        m.patch('https://databasin.org/api/v1/datasets/a1b2c3/')
 
         c = Client()
         dataset = c.get_dataset('a1b2c3')
@@ -90,8 +90,8 @@ def test_dataset_make_public(dataset_data):
 
 def test_dataset_make_private(dataset_data):
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
-        m.patch('http://databasin.org/api/v1/datasets/a1b2c3/')
+        m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
+        m.patch('https://databasin.org/api/v1/datasets/a1b2c3/')
 
         c = Client()
         dataset = c.get_dataset('a1b2c3')
@@ -112,7 +112,7 @@ def test_list_datasets(dataset_data):
             ]
         }
         data['objects'][1]['id'] = 'a1b2c4'
-        m.get('http://databasin.org/api/v1/datasets/', text=json.dumps(data))
+        m.get('https://databasin.org/api/v1/datasets/', text=json.dumps(data))
 
         c = Client()
         datasets = c.list_datasets()
@@ -141,8 +141,8 @@ def test_datasets_pagination(dataset_data):
             ]
         }
         page2_data['objects'][0]['id'] = 'a1b2c5'
-        m.get('http://databasin.org/api/v1/datasets/', text=json.dumps(page1_data))
-        m.get('http://databasin.org/api/v1/datasets/?offset=2', text=json.dumps(page2_data))
+        m.get('https://databasin.org/api/v1/datasets/', text=json.dumps(page1_data))
+        m.get('https://databasin.org/api/v1/datasets/?offset=2', text=json.dumps(page2_data))
 
         c = Client()
         datasets = c.list_datasets()
@@ -162,7 +162,7 @@ def test_datasets_with_filter():
             'meta': {'next': None, 'total_count': 0},
             'objects': []
         }
-        m.get('http://databasin.org/api/v1/datasets/?private=False', text=json.dumps(data))
+        m.get('https://databasin.org/api/v1/datasets/?private=False', text=json.dumps(data))
 
         c = Client()
         datasets = c.list_datasets({'private': False})
@@ -178,7 +178,7 @@ def test_my_datasets():
             'meta': {'next': None, 'total_count': 0},
             'objects': []
         }
-        m.get('http://databasin.org/api/v1/datasets/?owner_id=foo', text=json.dumps(data))
+        m.get('https://databasin.org/api/v1/datasets/?owner_id=foo', text=json.dumps(data))
 
         c = Client()
         c.username = 'foo'
@@ -191,7 +191,7 @@ def test_my_datasets():
 
 def test_get_dataset_import(dataset_import_data):
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
+        m.get('https://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
 
         c = Client()
         dataset_import = c.get_import('a1b2c3')
@@ -202,7 +202,7 @@ def test_get_dataset_import(dataset_import_data):
 
 def test_get_dataset_import_login_required():
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/dataset_imports/a1b2c3/', status_code=401)
+        m.get('https://databasin.org/api/v1/dataset_imports/a1b2c3/', status_code=401)
 
         c = Client()
         with pytest.raises(LoginRequiredError):
@@ -211,7 +211,7 @@ def test_get_dataset_import_login_required():
 
 def test_get_dataset_import_forbidden():
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/dataset_imports/a1b2c3/', status_code=401)
+        m.get('https://databasin.org/api/v1/dataset_imports/a1b2c3/', status_code=401)
 
         c = Client()
         c.username = 'foo'
@@ -230,7 +230,7 @@ def test_list_dataset_imports(dataset_import_data):
     data['objects'][1]['id'] = 'a1b2c4'
 
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/dataset_imports/', text=json.dumps(data))
+        m.get('https://databasin.org/api/v1/dataset_imports/', text=json.dumps(data))
 
         c = Client()
         imports = c.list_imports()
@@ -246,7 +246,7 @@ def test_list_dataset_imports_with_filters():
     data = {'meta': {'next': None, 'total_count': 0}, 'objects': []}
 
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/dataset_imports/?private=False', text=json.dumps(data))
+        m.get('https://databasin.org/api/v1/dataset_imports/?private=False', text=json.dumps(data))
 
         c = Client()
         c.list_imports(filters={'private': False})
@@ -257,8 +257,8 @@ def test_list_dataset_imports_with_filters():
 
 def test_dataset_import_cancel(dataset_import_data):
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
-        m.delete('http://databasin.org/api/v1/dataset_imports/a1b2c3/', status_code=204)
+        m.get('https://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
+        m.delete('https://databasin.org/api/v1/dataset_imports/a1b2c3/', status_code=204)
 
         c = Client()
         dataset_import = c.get_import('a1b2c3')
@@ -269,8 +269,8 @@ def test_dataset_import_cancel(dataset_import_data):
 
 def test_dataset_import_cancel_login_required(dataset_import_data):
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
-        m.delete('http://databasin.org/api/v1/dataset_imports/a1b2c3/', status_code=401)
+        m.get('https://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
+        m.delete('https://databasin.org/api/v1/dataset_imports/a1b2c3/', status_code=401)
 
         c = Client()
         dataset_import = c.get_import('a1b2c3')
@@ -280,8 +280,8 @@ def test_dataset_import_cancel_login_required(dataset_import_data):
 
 def test_dataset_import_cancel_forbidden(dataset_import_data):
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
-        m.delete('http://databasin.org/api/v1/dataset_imports/a1b2c3/', status_code=401)
+        m.get('https://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
+        m.delete('https://databasin.org/api/v1/dataset_imports/a1b2c3/', status_code=401)
 
         c = Client()
         c.username = 'foo'

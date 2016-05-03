@@ -26,7 +26,7 @@ DATASET_LIST_PATH = '/api/v1/datasets/'
 DEFAULT_HOST = 'databasin.org'
 JOB_CREATE_PATH = '/api/v1/jobs/'
 JOB_DETAIL_PATH = '/api/v1/jobs/{id}/'
-LOGIN_PATH = '/auth/login_iframe/'
+LOGIN_PATH = '/auth/api/login/'
 TEMPORARY_FILE_LIST_PATH = '/api/v1/uploads/temporary-files/'
 TEMPORARY_FILE_UPLOAD_PATH = '/uploads/upload-temporary-file/'
 
@@ -49,18 +49,17 @@ class Client(object):
         self._session.mount('https://', RefererHTTPAdapter())
         self._session.mount('http://', RefererHTTPAdapter())
 
-        self.base_url = 'http://{}'.format(host)
-        self.base_url_https = 'https://{}'.format(host)
+        self.base_url = 'https://{}'.format(host)
         self.username = None
 
-    def build_url(self, path, https=False):
-        return urljoin(self.base_url_https if https else self.base_url, path)
+    def build_url(self, path):
+        return urljoin(self.base_url, path)
 
     def login(self, username, password):
-        url = self.build_url(LOGIN_PATH, https=True)
+        url = self.build_url(LOGIN_PATH)
 
         # Make a get request first to get the CSRF token cookie
-        r = self._session.get(url)
+        r = self._session.get(self.build_url('/'))
         r.raise_for_status()
 
         r = self._session.post(url, data={
@@ -164,7 +163,7 @@ class Client(object):
 
         try:
             if style is not None and isinstance(style, six.string_types):
-                style = json.load(style)
+                style = json.loads(style)
 
             if style:
                 zf.writestr('style.json', json.dumps(style))

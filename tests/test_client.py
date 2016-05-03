@@ -20,7 +20,7 @@ try:
 except ImportError:
     import builtins
 
-LOGIN_URL = 'https://databasin.org/auth/login_iframe/'
+LOGIN_URL = 'https://databasin.org/auth/api/login/'
 
 
 @pytest.fixture()
@@ -75,15 +75,14 @@ def tmp_file_data():
         'date': '2015-11-17T22:42:06+00:00',
         'is_image': False,
         'filename': '',
-        'url': 'http://example.com/file.txt'
+        'url': 'https://example.com/file.txt'
     }
 
 
 def test_alternative_host():
     c = Client('example.com:81')
 
-    assert c.base_url == 'http://example.com:81'
-    assert c.base_url_https == 'https://example.com:81'
+    assert c.base_url == 'https://example.com:81'
 
 
 def test_https_referer():
@@ -98,7 +97,7 @@ def test_https_referer():
 
 def test_login():
     with requests_mock.mock() as m:
-        m.get(LOGIN_URL, cookies={'csrftoken': 'abcd'})
+        m.get('https://databasin.org/', cookies={'csrftoken': 'abcd'})
         m.post(LOGIN_URL, cookies={'sessionid': 'asdf'})
 
         c = Client()
@@ -109,26 +108,27 @@ def test_login():
 
 def test_login_no_redirect():
     with requests_mock.mock() as m:
-        m.get('http://databasin.org/')
+        m.get('https://databasin.org/redirect/')
+        m.get('https://databasin.org/', cookies={'csrftoken': 'abcd'})
         m.get(LOGIN_URL, cookies={'csrftoken': 'abcd'})
         m.post(
-            LOGIN_URL, headers={'Location': 'http://databasin.org/'}, cookies={'sessionid': 'asdf'}, status_code=302
+            LOGIN_URL, headers={'Location': 'https://databasin.org/'}, cookies={'sessionid': 'asdf'}, status_code=302
         )
 
         c = Client()
         c.login('foo', 'bar')
 
         assert m.call_count == 2
-        assert not any(r.url for r in m.request_history if r.url == 'http://databasin.org/')
+        assert not any(r.url for r in m.request_history if r.url == 'https://databasin.org/redirect/')
 
 
 def test_import_netcdf_dataset_with_zip(import_job_data, dataset_data, tmp_file_data):
     with requests_mock.mock() as m:
-        m.post('http://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
-        m.get('http://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
-        m.post('http://databasin.org/api/v1/jobs/', headers={'Location': 'http://databasin.org/api/v1/jobs/1234/'})
-        m.get('http://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
-        m.get('http://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
+        m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
+        m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
+        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': 'https://databasin.org/api/v1/jobs/1234/'})
+        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
+        m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
         f = six.BytesIO()
         with zipfile.ZipFile(f, 'w') as zf:
@@ -152,11 +152,11 @@ def test_import_netcdf_dataset_with_zip(import_job_data, dataset_data, tmp_file_
 
 def test_import_netcdf_dataset_with_nc(import_job_data, dataset_data, tmp_file_data):
     with requests_mock.mock() as m:
-        m.post('http://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
-        m.get('http://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
-        m.post('http://databasin.org/api/v1/jobs/', headers={'Location': 'http://databasin.org/api/v1/jobs/1234/'})
-        m.get('http://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
-        m.get('http://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
+        m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
+        m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
+        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': 'https://databasin.org/api/v1/jobs/1234/'})
+        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
+        m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
         with mock.patch.object(zipfile, 'ZipFile', mock.MagicMock()) as zf_mock:
             c = Client()
@@ -197,12 +197,12 @@ def test_import_netcdf_dataset_incomplete(import_job_data, tmp_file_data, datase
     import_job_data['message'] = json.dumps({'next_uri': '/datasets/import/a1b2c3/overview/'})
 
     with requests_mock.mock() as m:
-        m.post('http://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
-        m.get('http://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
-        m.post('http://databasin.org/api/v1/jobs/', headers={'Location': 'http://databasin.org/api/v1/jobs/1234/'})
-        m.get('http://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
-        m.get('http://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
-        m.delete('http://databasin.org/api/v1/dataset_imports/a1b2c3/')
+        m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
+        m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
+        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': 'https://databasin.org/api/v1/jobs/1234/'})
+        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
+        m.get('https://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
+        m.delete('https://databasin.org/api/v1/dataset_imports/a1b2c3/')
 
         f = six.BytesIO()
         with zipfile.ZipFile(f, 'w') as zf:
