@@ -116,6 +116,7 @@ class Client(object):
             raise
 
     def create_job(self, name, job_args={}, block=False):
+        #MG self.build_url(JOB_CREATE_PATH) = https://databasin.org/api/v1/jobs/
         job = JobResource.create(self.build_url(JOB_CREATE_PATH), name=name, job_args=job_args, session=self._session)
         if block:
             job.join()
@@ -149,7 +150,51 @@ class Client(object):
         except HTTPException as e:
             raise_for_authorization(e.response, self.username is not None)
             raise
+    
+    def import_lpk(self, lpk_file):
+        if lpk_file.endswith('.lpk'):
+            f = open(lpk_file, 'a+b')
+        else:
+            raise ValueError('File must be an ArcGIS Layer Package with a .lpk extension')
 
+        filename = '{0}.lpk'.format(os.path.splitext(os.path.basename(lpk_file))[0])
+        
+        tmp_file = self.upload_temporary_file(f, filename=filename)
+
+        f.close()
+
+        tmp_job_args = {
+            'file': tmp_file.uuid,
+            'url': None,
+            'dataset_type': 'ArcGIS_Native'
+        }
+       
+        tmp_job = self.create_job('create_import_job', job_args=tmp_job_args, block=True)
+        tmp_uri = tmp_job.message.split("/")[-2]
+        
+        final_job_args = {
+            'import_id': tmp_uri
+        }
+
+        final_job = self.create_job('finalize_import_job', job_args=final_job_args, block=True)
+
+        if final_job.status != 'succeeded':
+            raise DatasetImportError('Import failed: {0}'.format(final_job.message))
+
+        data = json.loads(final_job.message)
+        next_uri = data['next_uri']
+        if '/import/' in next_uri:
+            dataset_import_id = DATASET_IMPORT_ID_RE.search(next_uri).group(1)
+            dataset_import = self.get_import(dataset_import_id)
+            dataset_import.cancel()
+
+            raise DatasetImportError(
+                'Layer Package imports must have all necessary metadata information necessary for one-step import.'
+            )
+
+        dataset_id = next_uri.strip('/').split('/')[-1]
+        return self.get_dataset(dataset_id)
+    
     def import_netcdf_dataset(self, nc_or_zip_file, style=None):
         if nc_or_zip_file.endswith('.zip'):
             f = open(nc_or_zip_file, 'a+b')
