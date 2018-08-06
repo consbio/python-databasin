@@ -143,6 +143,29 @@ def test_import_lpk(import_job_data, dataset_data, tmp_file_data):
             assert request_data['job_args']['file'] == 'abcd'
             assert request_data['job_args']['dataset_type'] == 'ArcGIS_Native'
 
+def test_import_lpk_with_xml(import_job_data, dataset_data, tmp_file_data):
+    with requests_mock.mock() as m:
+        m.post('https://databasin.org/datasets/1234/import/metadata/')
+        m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
+        m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
+        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': 'https://databasin.org/api/v1/jobs/1234/'})
+        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
+        m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
+
+        f = six.BytesIO()
+        with mock.patch.object(builtins, 'open', mock.Mock(return_value=f)) as open_mock:
+            c = Client()
+            c._session.cookies['csrftoken'] = 'abcd'
+            dataset = c.import_lpk('test.lpk')
+
+            open_mock.assert_called_once_with('test.lpk', 'rb')
+            assert m.call_count == 7
+            assert dataset.id == 'a1b2c3'
+            request_data = json.loads(m.request_history[2].text)
+            assert request_data['job_name'] == 'create_import_job'
+            assert request_data['job_args']['file'] == 'abcd'
+            assert request_data['job_args']['dataset_type'] == 'ArcGIS_Native'
+
 def test_import_netcdf_dataset_with_zip(import_job_data, dataset_data, tmp_file_data):
     with requests_mock.mock() as m:
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))

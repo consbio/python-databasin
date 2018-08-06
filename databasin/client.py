@@ -151,7 +151,7 @@ class Client(object):
             raise_for_authorization(e.response, self.username is not None)
             raise
 
-    def import_lpk(self, lpk_file, xml):
+    def import_lpk(self, lpk_file, xml=None):
         if lpk_file.endswith('.lpk'):
             f = open(lpk_file, 'rb')
         else:
@@ -176,7 +176,7 @@ class Client(object):
             'import_id': uri
         }
 
-        if xml:
+        if xml is not None:
             xml_filename = os.path.basename(xml)
             with open(xml) as f:
                 files = {'data': (xml_filename, f)}
