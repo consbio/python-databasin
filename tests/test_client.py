@@ -152,14 +152,18 @@ def test_import_lpk_with_xml(import_job_data, dataset_data, tmp_file_data):
         m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
         m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
-        f = six.BytesIO()
+        f = mock.Mock()
+        f.read = mock.Mock(return_value='')
+        f.__enter__ = mock.Mock(return_value=f)
+        f.__exit__ = mock.Mock(return_value=f)
         with mock.patch.object(builtins, 'open', mock.Mock(return_value=f)) as open_mock:
             c = Client()
             c._session.cookies['csrftoken'] = 'abcd'
-            dataset = c.import_lpk('test.lpk')
+            dataset = c.import_lpk('test.lpk', 'test.xml')
 
-            open_mock.assert_called_once_with('test.lpk', 'rb')
-            assert m.call_count == 7
+            open_mock.assert_any_call('test.xml')
+            open_mock.assert_any_call('test.lpk', 'rb')
+            assert m.call_count == 8
             assert dataset.id == 'a1b2c3'
             request_data = json.loads(m.request_history[2].text)
             assert request_data['job_name'] == 'create_import_job'
