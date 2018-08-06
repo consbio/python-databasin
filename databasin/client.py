@@ -29,6 +29,7 @@ JOB_DETAIL_PATH = '/api/v1/jobs/{id}/'
 LOGIN_PATH = '/auth/api/login/'
 TEMPORARY_FILE_LIST_PATH = '/api/v1/uploads/temporary-files/'
 TEMPORARY_FILE_UPLOAD_PATH = '/uploads/upload-temporary-file/'
+METADATA_FILE_UPLOAD_PATH = '/datasets/{id}/import/metadata/'
 
 DATASET_IMPORT_ID_RE = re.compile(r'\/import\/([^\/]*)')
 
@@ -149,8 +150,8 @@ class Client(object):
         except HTTPException as e:
             raise_for_authorization(e.response, self.username is not None)
             raise
-    
-    def import_lpk(self, lpk_file):
+
+    def import_lpk(self, lpk_file, xml):
         if lpk_file.endswith('.lpk'):
             f = open(lpk_file, 'rb')
         else:
@@ -174,6 +175,15 @@ class Client(object):
         final_job_args = {
             'import_id': uri
         }
+
+        if xml:
+            xml_filename = os.path.basename(xml)
+            with open(xml) as f:
+                files = {'data': (xml_filename, f)}
+                data = {'layerOrderArray': 0, 'source': ''}
+                url = self.build_url(METADATA_FILE_UPLOAD_PATH.format(id=uri))
+                r = self._session.post(url, files=files, data=data)
+                r.raise_for_status()
 
         final_job = self.create_job('finalize_import_job', job_args=final_job_args, block=True)
 
