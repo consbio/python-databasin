@@ -1,4 +1,6 @@
 *.pyc
 *.swp
 build/
+dist/
+.cache/
 python_databasin.egg-info/
