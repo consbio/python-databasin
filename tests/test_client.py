@@ -125,7 +125,7 @@ def test_import_lpk(import_job_data, dataset_data, tmp_file_data):
     with requests_mock.mock() as m:
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
         m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
-        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': 'https://databasin.org/api/v1/jobs/1234/'})
+        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1234/'})
         m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
         m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
@@ -148,7 +148,7 @@ def test_import_lpk_with_xml(import_job_data, dataset_data, tmp_file_data):
         m.post('https://databasin.org/datasets/1234/import/metadata/')
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
         m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
-        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': 'https://databasin.org/api/v1/jobs/1234/'})
+        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1234/'})
         m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
         m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
@@ -174,7 +174,7 @@ def test_import_netcdf_dataset_with_zip(import_job_data, dataset_data, tmp_file_
     with requests_mock.mock() as m:
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
         m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
-        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': 'https://databasin.org/api/v1/jobs/1234/'})
+        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1234/'})
         m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
         m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
@@ -202,7 +202,7 @@ def test_import_netcdf_dataset_with_nc(import_job_data, dataset_data, tmp_file_d
     with requests_mock.mock() as m:
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
         m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
-        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': 'https://databasin.org/api/v1/jobs/1234/'})
+        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1234/'})
         m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
         m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
@@ -247,7 +247,7 @@ def test_import_netcdf_dataset_incomplete(import_job_data, tmp_file_data, datase
     with requests_mock.mock() as m:
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
         m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
-        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': 'https://databasin.org/api/v1/jobs/1234/'})
+        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1234/'})
         m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
         m.get('https://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
         m.delete('https://databasin.org/api/v1/dataset_imports/a1b2c3/')

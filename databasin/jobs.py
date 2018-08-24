@@ -29,7 +29,13 @@ class JobResource(Resource):
         raise_for_authorization(r, hasattr(session, 'client') and session.client.username is not None)
         r.raise_for_status()
 
-        return cls.get(r.headers['Location'], session=session)
+        location = r.headers['Location']
+        location_o = urlparse(location)
+        if not location_o.scheme:
+            url_o = urlparse(url)
+            location = '{}://{}{}'.format(url_o.scheme, url_o.netloc, location_o.path)
+
+        return cls.get(location, session=session)
 
     def refresh(self):
         job = self.get(self._url, lazy=False, session=self._session)
