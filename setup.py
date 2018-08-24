@@ -1,9 +1,14 @@
+import os
 import subprocess
 
 import sys
 from setuptools import Command, setup
 
 import databasin
+
+
+with open(os.path.join(os.path.dirname(__file__), 'README.md')) as f:
+    long_description = f.read()
 
 
 class PyTest(Command):
@@ -23,6 +28,8 @@ class PyTest(Command):
 setup(
     name='python-databasin',
     description='A client library for Data Basin (http://databasin.org)',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Conservation Biology Institute',
     keywords='data basin',
     version=databasin.__version__,
