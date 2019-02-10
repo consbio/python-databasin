@@ -1,10 +1,15 @@
 import copy
+import datetime
 import json
 import zipfile
 
+import dateutil.parser
 import pytest
 import requests_mock
 import six
+from dateutil.tz import tzlocal
+from django.core.signing import base64_hmac
+from django.utils.crypto import constant_time_compare
 from requests.models import Request
 
 from databasin.client import Client
@@ -79,6 +84,36 @@ def tmp_file_data():
     }
 
 
+def make_api_key_callback(response, key):
+    class AuthenticationError(Exception):
+        pass
+
+    def callback(request, context):
+        if not all(h in request.headers for h in ('x-api-user', 'x-api-time', 'x-api-signature')):
+            context.status_code = 401
+            raise AuthenticationError('API headers are missing')
+
+        request_time = dateutil.parser.parse(request.headers['x-api-time'])
+        if request_time > datetime.datetime.now(tzlocal()) + datetime.timedelta(minutes=5):
+            raise AuthenticationError('API request date is too old')
+
+        try:
+            salt, signature = request.headers['x-api-signature'].split(b':', 1)
+            signature = signature.strip(b'=')
+        except ValueError:
+            raise AuthenticationError('API signature is malformed')
+
+        test_signature = base64_hmac(salt, request.headers['x-api-time'], key)
+        if constant_time_compare(test_signature, signature):
+            context.status_code = 200
+            return response
+
+        context.status_code = 401
+        raise AuthenticationError('Key signature is bad ({} != {})'.format(signature, test_signature))
+
+    return callback
+
+
 def test_alternative_host():
     c = Client('example.com:81')
 
@@ -142,6 +177,43 @@ def test_import_lpk(import_job_data, dataset_data, tmp_file_data):
             assert request_data['job_name'] == 'create_import_job'
             assert request_data['job_args']['file'] == 'abcd'
             assert request_data['job_args']['dataset_type'] == 'ArcGIS_Native'
+
+def test_import_lpk_with_api_key(import_job_data, dataset_data, tmp_file_data):
+    key = 'abcdef123456'
+
+    with requests_mock.mock() as m:
+        m.post(
+            'https://databasin.org/uploads/upload-temporary-file/',
+            text=make_api_key_callback(json.dumps({'uuid': 'abcd'}), key)
+        )
+        m.get(
+            'https://databasin.org/api/v1/uploads/temporary-files/abcd/',
+            text=make_api_key_callback(json.dumps(tmp_file_data), key)
+        )
+        m.post(
+            'https://databasin.org/api/v1/jobs/',
+            headers={'Location': '/api/v1/jobs/1234/'},
+            text=make_api_key_callback('', key)
+        )
+        m.get(
+            'https://databasin.org/api/v1/jobs/1234/',
+            text=make_api_key_callback(json.dumps(import_job_data), key)
+        )
+        m.get(
+            'https://databasin.org/api/v1/datasets/a1b2c3/',
+            text=make_api_key_callback(json.dumps(dataset_data), key)
+        )
+
+        f = six.BytesIO()
+        with mock.patch.object(builtins, 'open', mock.Mock(return_value=f)) as open_mock:
+            c = Client()
+            c._session.cookies['csrftoken'] = 'abcd'
+            c.set_api_key('user', key)
+            dataset = c.import_lpk('test.lpk')
+
+            open_mock.assert_called_once_with('test.lpk', 'rb')
+            assert m.call_count == 7
+            assert dataset.id == 'a1b2c3'
 
 def test_import_lpk_with_xml(import_job_data, dataset_data, tmp_file_data):
     with requests_mock.mock() as m:

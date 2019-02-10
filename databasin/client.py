@@ -1,12 +1,20 @@
+import base64
+import datetime
+import hashlib
+import hmac
 import json
 import os
+import random
 import re
+import string
 import zipfile
 
 import six
+from dateutil.tz import tzlocal
 from requests import Session
 from requests.adapters import HTTPAdapter
 from restle.exceptions import HTTPException
+from six import text_type
 
 import databasin
 from databasin.datasets import DatasetResource, DatasetListResource, DatasetImportListResource, DatasetImportResource
@@ -43,7 +51,7 @@ class RefererHTTPAdapter(HTTPAdapter):
 
 
 class Client(object):
-    def __init__(self, host=DEFAULT_HOST):
+    def __init__(self, host=DEFAULT_HOST, user=None, api_key=None):
         self._session = Session()
         self._session.client = self
         self._session.headers = {'user-agent': 'python-databasin/{}'.format(databasin.__version__)}
@@ -53,6 +61,41 @@ class Client(object):
         self.base_url = 'https://{}'.format(host)
         self.username = None
 
+        self.user = None
+        self.api_key = None
+        self.set_api_key(user, api_key)
+
+    def get(self, *args, **kwargs):
+        self.update_headers()
+
+        return self._session.get(*args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        self.update_headers()
+
+        return self._session.post(*args, **kwargs)
+
+    def update_headers(self):
+        if self.api_key is None:
+            try:
+                del self._session.headers['x-api-user']
+                del self._session.headers['x-api-time']
+                del self._session.headers['x-api-signature']
+            except KeyError:
+                pass
+            return
+
+        date = datetime.datetime.now(tzlocal()).isoformat().encode()
+        salt = ''.join(random.SystemRandom().choice(string.ascii_letters) for _ in range(10)).encode()
+
+        self._session.headers.update({
+            'x-api-user': self.user,
+            'x-api-time': date,
+            'x-api-signature': b':'.join((salt, base64.urlsafe_b64encode(
+                hmac.new(hashlib.sha1(salt + self.api_key).digest(), msg=date, digestmod=hashlib.sha1).digest()
+            )))
+        })
+
     def build_url(self, path):
         return urljoin(self.base_url, path)
 
@@ -60,10 +103,10 @@ class Client(object):
         url = self.build_url(LOGIN_PATH)
 
         # Make a get request first to get the CSRF token cookie
-        r = self._session.get(self.build_url('/'))
+        r = self.get(self.build_url('/'))
         r.raise_for_status()
 
-        r = self._session.post(url, data={
+        r = self.post(url, data={
             'username': username,
             'password': password,
             'csrfmiddlewaretoken': r.cookies['csrftoken']
@@ -75,7 +118,19 @@ class Client(object):
 
         self.username = username
 
+    def set_api_key(self, user, api_key):
+        if user is None and api_key is not None:
+            raise ValueError('A user is required with API keys')
+
+        if isinstance(api_key, text_type):
+            api_key = api_key.encode()
+
+        self.user = user
+        self.api_key = api_key
+
     def list_datasets(self, filters={}, items_per_page=100):
+        self.update_headers()
+
         filters['limit'] = items_per_page
         url = '{0}?{1}'.format(self.build_url(DATASET_LIST_PATH), urlencode(filters))
 
@@ -92,6 +147,8 @@ class Client(object):
         return self.list_datasets(**kwargs)
 
     def get_dataset(self, dataset_id):
+        self.update_headers()
+
         try:
             return DatasetResource.get(
                 self.build_url(DATASET_DETAIL_PATH.format(id=dataset_id)), session=self._session, lazy=False
@@ -101,6 +158,8 @@ class Client(object):
             raise
 
     def list_imports(self, filters={}):
+        self.update_headers()
+
         url = self.build_url(DATASET_IMPORT_LIST_PATH)
         if filters:
             url += '?{0}'.format(urlencode(filters))
@@ -108,6 +167,8 @@ class Client(object):
         return ResourcePaginator(DatasetImportListResource.get(url, session=self._session, lazy=False))
 
     def get_import(self, import_id):
+        self.update_headers()
+
         try:
             return DatasetImportResource.get(
                 self.build_url(DATASET_IMPORT_DETAIL_PATH.format(id=import_id)), session=self._session, lazy=False
@@ -117,6 +178,8 @@ class Client(object):
             raise
 
     def create_job(self, name, job_args={}, block=False):
+        self.update_headers()
+
         job = JobResource.create(self.build_url(JOB_CREATE_PATH), name=name, job_args=job_args, session=self._session)
         if block:
             job.join()
@@ -124,6 +187,8 @@ class Client(object):
         return job
 
     def get_job(self, job_id):
+        self.update_headers()
+
         try:
             return JobResource.get(
                 self.build_url(JOB_DETAIL_PATH.format(id=job_id)), session=self._session, lazy=False
@@ -133,16 +198,22 @@ class Client(object):
             raise
 
     def upload_temporary_file(self, f, filename=None):
+        self.update_headers()
+
         return TemporaryFileResource.upload(
             self.build_url(TEMPORARY_FILE_UPLOAD_PATH), f, filename=filename, session=self._session
         )
 
     def list_temporary_files(self):
+        self.update_headers()
+
         return ResourcePaginator(
             TemporaryFileListResource.get(self.build_url(TEMPORARY_FILE_LIST_PATH), session=self._session, lazy=False)
         )
 
     def get_temporary_file(self, uuid):
+        self.update_headers()
+
         try:
             return TemporaryFileResource.get(
                 self.build_url(TEMPORARY_FILE_DETAIL_PATH.format(uuid=uuid)), session=self._session, lazy=False
@@ -182,7 +253,7 @@ class Client(object):
                 files = {'data': (xml_filename, f)}
                 data = {'layerOrderArray': 0, 'source': ''}
                 url = self.build_url(METADATA_FILE_UPLOAD_PATH.format(id=uri))
-                r = self._session.post(url, files=files, data=data)
+                r = self.post(url, files=files, data=data)
                 r.raise_for_status()
 
         final_job = self.create_job('finalize_import_job', job_args=final_job_args, block=True)
