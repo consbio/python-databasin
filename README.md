@@ -42,6 +42,7 @@ print(dataset.title)
 
 ```python
 from databasin.client import Client
+
 c = Client()
 c.set_api_key('<username>', '<api key>')
 
