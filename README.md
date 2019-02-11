@@ -37,3 +37,13 @@ dataset = c.import_lpk('/path/to/lpk_with_metadata.lpk')
 print(dataset.id)
 print(dataset.title)
 ```
+
+`python-databasin` can be used with an API key instead of a password:
+
+```python
+from databasin.client import Client
+c = Client()
+c.set_api_key('<username>', '<api key>')
+
+my_datasets = c.list_my_datasets()
+```
