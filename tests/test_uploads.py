@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import copy
 import json
 
@@ -7,6 +9,7 @@ from six import StringIO
 
 from databasin.client import Client
 from databasin.exceptions import LoginRequiredError
+from .utils import make_api_key_callback
 
 try:
     from unittest import mock  # Py3
@@ -55,6 +58,26 @@ def test_temporary_file_upload_login_required():
             c.upload_temporary_file(StringIO('foo'))
 
 
+def test_temporary_file_upload_with_api_key(tmp_file_data):
+    key = 'abcde12345'
+
+    with requests_mock.mock() as m:
+        m.post(
+            'https://databasin.org/uploads/upload-temporary-file/',
+            text=make_api_key_callback(json.dumps({'uuid': '1234'}), key)
+        )
+        m.get('https://databasin.org/api/v1/uploads/temporary-files/1234/', text=json.dumps(tmp_file_data))
+
+        c = Client()
+        c.set_api_key('user', key)
+        c._session.cookies['csrftoken'] = 'abcd'
+        tmp_file = c.upload_temporary_file(StringIO('foo'))
+
+        assert tmp_file.uuid == '1234'
+        assert tmp_file.filename == ''
+        assert m.call_count == 2
+
+
 def test_temporary_file_upload_from_path(tmp_file_data):
     with requests_mock.mock() as m:
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': '1234'}))
@@ -62,6 +85,30 @@ def test_temporary_file_upload_from_path(tmp_file_data):
 
         with mock.patch.object(builtins, 'open', mock.mock_open(read_data='foo')) as open_mock:
             c = Client()
+            c._session.cookies['csrftoken'] = 'abcd'
+            tmp_file = c.upload_temporary_file('/path/to/foo.txt')
+
+            assert tmp_file.uuid == '1234'
+            open_mock.assert_called_once_with('/path/to/foo.txt', 'rb')
+            assert 'filename="foo.txt"' in str(m.request_history[0].body)
+
+
+def test_temporary_file_upload_from_path_with_api_key(tmp_file_data):
+    key = 'abcde12345'
+
+    with requests_mock.mock() as m:
+        m.post(
+            'https://databasin.org/uploads/upload-temporary-file/',
+            text=make_api_key_callback(json.dumps({'uuid': '1234'}), key)
+        )
+        m.get(
+            'https://databasin.org/api/v1/uploads/temporary-files/1234/',
+            text=make_api_key_callback(json.dumps(tmp_file_data), key)
+        )
+
+        with mock.patch.object(builtins, 'open', mock.mock_open(read_data='foo')) as open_mock:
+            c = Client()
+            c.set_api_key('user', key)
             c._session.cookies['csrftoken'] = 'abcd'
             tmp_file = c.upload_temporary_file('/path/to/foo.txt')
 
@@ -91,6 +138,23 @@ def test_get_temporary_file_login_required(tmp_file_data):
             tmp_file = c.get_temporary_file('1234')
 
 
+def test_get_temporary_file_with_api_key(tmp_file_data):
+    key = 'abcde12345'
+
+    with requests_mock.mock() as m:
+        m.get(
+            'https://databasin.org/api/v1/uploads/temporary-files/1234/',
+            text=make_api_key_callback(json.dumps(tmp_file_data), key)
+        )
+
+        c = Client()
+        c.set_api_key('user', key)
+        tmp_file = c.get_temporary_file('1234')
+
+        assert m.called
+        assert tmp_file.uuid == '1234'
+
+
 def test_list_temporary_files(tmp_file_data):
     data = {
         'meta': {'next': None, 'total_count': 2},
@@ -112,3 +176,29 @@ def test_list_temporary_files(tmp_file_data):
         assert tmp_files[0].uuid == '1234'
         assert tmp_files[1].uuid == '1235'
 
+
+def test_list_temporary_files_with_api_key(tmp_file_data):
+    key = 'abcde12345'
+    data = {
+        'meta': {'next': None, 'total_count': 2},
+        'objects': [
+            tmp_file_data,
+            copy.copy(tmp_file_data)
+        ]
+    }
+    data['objects'][1]['uuid'] = 1235
+
+    with requests_mock.mock() as m:
+        m.get(
+            'https://databasin.org/api/v1/uploads/temporary-files/',
+            text=make_api_key_callback(json.dumps(data), key)
+        )
+
+        c = Client()
+        c.set_api_key('user', key)
+        tmp_files = c.list_temporary_files()
+
+        assert len(tmp_files) == 2
+        tmp_files = list(tmp_files)
+        assert tmp_files[0].uuid == '1234'
+        assert tmp_files[1].uuid == '1235'
