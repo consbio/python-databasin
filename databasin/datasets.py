@@ -42,6 +42,16 @@ class DatasetResource(Resource):
     def make_private(self):
         self._set_private(True)
 
+    @property
+    def data(self):
+        """ Returns dataset data as a CSV-formatted string """
+
+        r = self._session.get('{}/data/'.format(self._url.strip('/')))
+        raise_for_authorization(r, hasattr(self._session, 'client') and self._session.client.username is not None)
+        r.raise_for_status()
+
+        return r.text
+
 
 class DatasetListResource(Resource):
     meta = fields.ObjectField('meta')

@@ -85,7 +85,7 @@ def test_dataset_make_public(dataset_data):
 
         assert m.call_count == 2
         request_data = json.loads(m.request_history[1].text)
-        assert request_data['private'] == False
+        assert request_data['private'] is False
 
 
 def test_dataset_make_private(dataset_data):
@@ -99,8 +99,32 @@ def test_dataset_make_private(dataset_data):
 
         assert m.call_count == 2
         request_data = json.loads(m.request_history[1].text)
-        assert request_data['private'] == True
+        assert request_data['private'] is True
 
+def test_dataset_get_data(dataset_data):
+    csv_data = '\n'.join([
+        'id,col1,col2,lat,lon',
+        '1,23,1,44,-120',
+        '2,22,41,45.2,-121.2'
+    ])
+
+    with requests_mock.mock() as m:
+        m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
+        m.get(
+            'https://databasin.org/api/v1/datasets/a1b2c3/data/',
+            headers={
+                'content-disposition': 'attachment; filename="a1b2c3.csv"',
+                'content-type': 'application/csv'
+            },
+            text=csv_data
+        )
+
+        c = Client()
+        dataset = c.get_dataset('a1b2c3')
+        data = dataset.data
+
+        assert m.call_count == 2
+        assert data == csv_data
 
 def test_list_datasets(dataset_data):
     with requests_mock.mock() as m:
