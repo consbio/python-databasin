@@ -55,7 +55,7 @@ class DatasetResource(Resource):
 
 class DatasetListResource(Resource):
     meta = fields.ObjectField('meta')
-    objects = fields.ToManyField(DatasetResource, nest_type='full')
+    objects = fields.ToManyField(DatasetResource, nest_type='full', id_field='id', relative_path='{id}/')
 
 
 class DatasetImportResource(Resource):
