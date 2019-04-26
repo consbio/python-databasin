@@ -61,7 +61,6 @@ class Client(object):
         self.base_url = 'https://{}'.format(host)
         self.username = None
 
-        self.user = None
         self.api_key = None
         self.set_api_key(user, api_key)
 
@@ -89,7 +88,7 @@ class Client(object):
         salt = ''.join(random.SystemRandom().choice(string.ascii_letters) for _ in range(10)).encode()
 
         self._session.headers.update({
-            'x-api-user': self.user,
+            'x-api-user': self.username,
             'x-api-time': date,
             'x-api-signature': b':'.join((salt, base64.urlsafe_b64encode(
                 hmac.new(hashlib.sha1(salt + self.api_key).digest(), msg=date, digestmod=hashlib.sha1).digest()
@@ -118,14 +117,14 @@ class Client(object):
 
         self.username = username
 
-    def set_api_key(self, user, api_key):
-        if user is None and api_key is not None:
+    def set_api_key(self, username, api_key):
+        if username is None and api_key is not None:
             raise ValueError('A user is required with API keys')
 
         if isinstance(api_key, text_type):
             api_key = api_key.encode()
 
-        self.user = user
+        self.username = username
         self.api_key = api_key
 
     def list_datasets(self, filters={}, items_per_page=100):
