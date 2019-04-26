@@ -34,7 +34,7 @@ setup(
     keywords='data basin',
     version=databasin.__version__,
     packages=['databasin'],
-    install_requires=['python-dateutil', 'six', 'requests', 'restle'],
+    install_requires=['python-dateutil', 'six', 'requests', 'restle==0.5.0'],
     url='https://github.com/consbio/python-databasin',
     license='BSD',
     tests_require=['pytest', 'requests-mock>=0.7.0', 'mock', 'django>=1.11.20,<1.12'],
