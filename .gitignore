@@ -3,5 +3,6 @@
 build/
 dist/
 .cache/
+__pycache__
 python_databasin.egg-info/
 .pytest_cache/

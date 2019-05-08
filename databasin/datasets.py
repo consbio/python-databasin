@@ -25,6 +25,7 @@ class DatasetResource(Resource):
     contact_persons = fields.TextField(required=False)
     is_aggregate = fields.BooleanField(default=False)
     can_download = fields.BooleanField(default=False)
+    user_can_download = fields.BooleanField(default=False)
     allow_anonymous_download = fields.BooleanField(default=False)
     can_comment = fields.BooleanField(default=False)
     tags = fields.ObjectField()
