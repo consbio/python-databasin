@@ -1,4 +1,4 @@
-# python-databasin 0.5.1
+# python-databasin 0.5.2
 
 [![Build Status](https://travis-ci.org/consbio/python-databasin.png?branch=master)](https://travis-ci.org/consbio/python-databasin) [![Coverage Status](https://coveralls.io/repos/consbio/python-databasin/badge.svg?branch=master&service=github)](https://coveralls.io/github/consbio/python-databasin?branch=master)
 
