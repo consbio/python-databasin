@@ -71,6 +71,16 @@ def import_job_data():
     }
 
 @pytest.fixture
+def import_netcdf_job_data():
+    return {
+        'id': '1234',
+        'job_name': 'create_import_job',
+        'status': 'succeeded',
+        'progress': 100,
+        'message': json.dumps({'next_uri': '/datasets/a1b2c3/'})
+    }
+
+@pytest.fixture
 def finalize_job_data():
     return {
         'id': '1235',
@@ -240,15 +250,12 @@ def test_import_lpk_with_xml(import_job_data, dataset_data, dataset_import_data,
             assert request_data['job_args']['dataset_type'] == 'ArcGIS_Native'
 
 
-def test_import_netcdf_dataset_with_zip(import_job_data, dataset_data, tmp_file_data):
+def test_import_netcdf_dataset_with_zip(import_netcdf_job_data, dataset_data, tmp_file_data):
     with requests_mock.mock() as m:
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
         m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
         m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1234/'})
-        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps({
-            **import_job_data,
-            'message': json.dumps({'next_uri': '/datasets/a1b2c3/'})
-        }))
+        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_netcdf_job_data))
         m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
         f = six.BytesIO()
@@ -271,15 +278,12 @@ def test_import_netcdf_dataset_with_zip(import_job_data, dataset_data, tmp_file_
             assert request_data['job_args']['dataset_type'] == 'NetCDF_Native'
 
 
-def test_import_netcdf_dataset_with_nc(import_job_data, dataset_data, tmp_file_data):
+def test_import_netcdf_dataset_with_nc(import_netcdf_job_data, dataset_data, tmp_file_data):
     with requests_mock.mock() as m:
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
         m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
         m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1234/'})
-        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps({
-            **import_job_data,
-            'message': json.dumps({'next_uri': '/datasets/a1b2c3/'})
-        }))
+        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_netcdf_job_data))
         m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
         with mock.patch.object(zipfile, 'ZipFile', mock.MagicMock()) as zf_mock:
@@ -296,7 +300,7 @@ def test_import_netcdf_dataset_with_nc(import_job_data, dataset_data, tmp_file_d
             assert request_data['job_args']['dataset_type'] == 'NetCDF_Native'
 
 
-def test_import_netcdf_dataset_with_api_key(import_job_data, dataset_data, tmp_file_data):
+def test_import_netcdf_dataset_with_api_key(import_netcdf_job_data, dataset_data, tmp_file_data):
     key = 'abcde12345'
 
     with requests_mock.mock() as m:
@@ -314,10 +318,7 @@ def test_import_netcdf_dataset_with_api_key(import_job_data, dataset_data, tmp_f
         )
         m.get(
             'https://databasin.org/api/v1/jobs/1234/',
-            text=make_api_key_callback(json.dumps({
-                **import_job_data,
-                'message': json.dumps({'next_uri': '/datasets/a1b2c3/'})
-            }), key)
+            text=make_api_key_callback(json.dumps(import_netcdf_job_data), key)
         )
         m.get(
             'https://databasin.org/api/v1/datasets/a1b2c3/',
