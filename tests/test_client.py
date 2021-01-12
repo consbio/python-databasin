@@ -67,7 +67,17 @@ def import_job_data():
         'job_name': 'create_import_job',
         'status': 'succeeded',
         'progress': 100,
-        'message': json.dumps({'next_uri': '/datasets/a1b2c3'})
+        'message': json.dumps({'next_uri': '/datasets/import/a1b2c3/overview/'})
+    }
+
+@pytest.fixture
+def finalize_job_data():
+    return {
+        'id': '1235',
+        'job_name': 'finalize_import_job',
+        'status': 'succeeded',
+        'progress': 100,
+        'message': json.dumps({'next_uri': '/datasets/a1b2c3/'})
     }
 
 
@@ -125,12 +135,15 @@ def test_login_no_redirect():
         assert not any(r.url for r in m.request_history if r.url == 'https://databasin.org/redirect/')
 
 
-def test_import_lpk(import_job_data, dataset_data, tmp_file_data):
+def test_import_lpk(import_job_data, dataset_data, dataset_import_data, finalize_job_data, tmp_file_data):
     with requests_mock.mock() as m:
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
         m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
         m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1234/'})
         m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
+        m.get('https://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
+        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1235/'})
+        m.get('https://databasin.org/api/v1/jobs/1235/', text=json.dumps(finalize_job_data))
         m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
         f = six.BytesIO()
@@ -148,7 +161,7 @@ def test_import_lpk(import_job_data, dataset_data, tmp_file_data):
             assert request_data['job_args']['dataset_type'] == 'ArcGIS_Native'
 
 
-def test_import_lpk_with_api_key(import_job_data, dataset_data, tmp_file_data):
+def test_import_lpk_with_api_key(import_job_data, dataset_data, dataset_import_data, finalize_job_data, tmp_file_data):
     key = 'abcdef123456'
 
     with requests_mock.mock() as m:
@@ -170,6 +183,16 @@ def test_import_lpk_with_api_key(import_job_data, dataset_data, tmp_file_data):
             text=make_api_key_callback(json.dumps(import_job_data), key)
         )
         m.get(
+            'https://databasin.org/api/v1/dataset_imports/a1b2c3/',
+            text=make_api_key_callback(json.dumps(dataset_import_data), key)
+        )
+        m.post(
+            'https://databasin.org/api/v1/jobs/',
+            headers={'Location': '/api/v1/jobs/1235/'},
+            text=make_api_key_callback('', key)
+        )
+        m.get('https://databasin.org/api/v1/jobs/1235/', text=make_api_key_callback(json.dumps(finalize_job_data), key))
+        m.get(
             'https://databasin.org/api/v1/datasets/a1b2c3/',
             text=make_api_key_callback(json.dumps(dataset_data), key)
         )
@@ -186,13 +209,16 @@ def test_import_lpk_with_api_key(import_job_data, dataset_data, tmp_file_data):
             assert dataset.id == 'a1b2c3'
 
 
-def test_import_lpk_with_xml(import_job_data, dataset_data, tmp_file_data):
+def test_import_lpk_with_xml(import_job_data, dataset_data, dataset_import_data, finalize_job_data, tmp_file_data):
     with requests_mock.mock() as m:
         m.post('https://databasin.org/datasets/1234/import/metadata/')
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
         m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
         m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1234/'})
         m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
+        m.get('https://databasin.org/api/v1/dataset_imports/a1b2c3/', text=json.dumps(dataset_import_data))
+        m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1235/'})
+        m.get('https://databasin.org/api/v1/jobs/1235/', text=json.dumps(finalize_job_data))
         m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
         f = mock.Mock()
@@ -219,7 +245,10 @@ def test_import_netcdf_dataset_with_zip(import_job_data, dataset_data, tmp_file_
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
         m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
         m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1234/'})
-        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
+        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps({
+            **import_job_data,
+            'message': json.dumps({'next_uri': '/datasets/a1b2c3/'})
+        }))
         m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
         f = six.BytesIO()
@@ -247,7 +276,10 @@ def test_import_netcdf_dataset_with_nc(import_job_data, dataset_data, tmp_file_d
         m.post('https://databasin.org/uploads/upload-temporary-file/', text=json.dumps({'uuid': 'abcd'}))
         m.get('https://databasin.org/api/v1/uploads/temporary-files/abcd/', text=json.dumps(tmp_file_data))
         m.post('https://databasin.org/api/v1/jobs/', headers={'Location': '/api/v1/jobs/1234/'})
-        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps(import_job_data))
+        m.get('https://databasin.org/api/v1/jobs/1234/', text=json.dumps({
+            **import_job_data,
+            'message': json.dumps({'next_uri': '/datasets/a1b2c3/'})
+        }))
         m.get('https://databasin.org/api/v1/datasets/a1b2c3/', text=json.dumps(dataset_data))
 
         with mock.patch.object(zipfile, 'ZipFile', mock.MagicMock()) as zf_mock:
@@ -282,7 +314,10 @@ def test_import_netcdf_dataset_with_api_key(import_job_data, dataset_data, tmp_f
         )
         m.get(
             'https://databasin.org/api/v1/jobs/1234/',
-            text=make_api_key_callback(json.dumps(import_job_data), key)
+            text=make_api_key_callback(json.dumps({
+                **import_job_data,
+                'message': json.dumps({'next_uri': '/datasets/a1b2c3/'})
+            }), key)
         )
         m.get(
             'https://databasin.org/api/v1/datasets/a1b2c3/',

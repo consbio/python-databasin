@@ -39,7 +39,7 @@ TEMPORARY_FILE_LIST_PATH = '/api/v1/uploads/temporary-files/'
 TEMPORARY_FILE_UPLOAD_PATH = '/uploads/upload-temporary-file/'
 METADATA_FILE_UPLOAD_PATH = '/datasets/{id}/import/metadata/'
 
-DATASET_IMPORT_ID_RE = re.compile(r'\/import\/([^\/]*)')
+DATASET_IMPORT_ID_RE = re.compile(r'\/import\/([^\/]*)\/')
 
 
 class RefererHTTPAdapter(HTTPAdapter):
@@ -240,10 +240,10 @@ class Client(object):
         }
        
         job = self.create_job('create_import_job', job_args=job_args, block=True)
-        uri = job.message.split("/")[-2]
+        import_id = json.loads(job.message)['next_uri'].strip('/').split('/')[-2]
         
         final_job_args = {
-            'import_id': uri
+            'import_id': import_id
         }
 
         if xml is not None:
@@ -251,7 +251,7 @@ class Client(object):
             with open(xml) as f:
                 files = {'data': (xml_filename, f)}
                 data = {'layerOrderArray': 0, 'source': ''}
-                url = self.build_url(METADATA_FILE_UPLOAD_PATH.format(id=uri))
+                url = self.build_url(METADATA_FILE_UPLOAD_PATH.format(id=import_id))
                 r = self.post(url, files=files, data=data)
                 r.raise_for_status()
 
