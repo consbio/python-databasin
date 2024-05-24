@@ -23,6 +23,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install poetry
           rm poetry.lock
+          poetry config experimental.new-installer false
           poetry env use system
           poetry install --no-root
       - name: Test with pytest
