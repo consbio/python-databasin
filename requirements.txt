@@ -1,4 +1,0 @@
-python-dateutil
-six>=1.10.0
-requests>=2.8.1
-restle>=0.5.0
