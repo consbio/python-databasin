@@ -5,6 +5,9 @@ description = ""
 authors = ["Conservation Biology Institute"]
 license = "BSD-3-Clause"
 readme = "README.md"
+packages = [
+    { include = "databasin" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
