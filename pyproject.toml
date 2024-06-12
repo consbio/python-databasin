@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "python-databasin"
-version = "0.6.0"
+version = "0.6.1"
 description = ""
 authors = ["Conservation Biology Institute"]
 license = "BSD-3-Clause"
