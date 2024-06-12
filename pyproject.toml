@@ -10,22 +10,13 @@ readme = "README.md"
 python = "~2.7 || ^3.8"
 python-dateutil = "^2.9.0.post0"
 six = "^1.16.0"
-requests = [
-    { version = "^2.32.2", python = "^3.8" },
-    { version = "^1.2.3", python = "~2.7" }
-]
+requests = "^2.32.2"
 restle = "^0.5.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = [
-    { version = "^8.2.1", python = "^3.8" },
-    { version = "^4.6.11", python = "~2.7" }
-]
+pytest = "^8.2.1"
 requests-mock = ">=0.7.0"
-mock = [
-    { version = "^5.1.0", python = "^3.8" },
-    { version = "^3.0.5", python = "~2.7" }
-]
+mock = "^5.1.0"
 Django = ">=1.11.20,<1.12"
 
 [build-system]
