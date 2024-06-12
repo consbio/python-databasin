@@ -222,10 +222,10 @@ class Client(object):
             raise
 
     def import_lpk(self, lpk_file, xml=None):
-        if lpk_file.endswith('.lpk'):
+        if lpk_file.endswith('.lpk') or lpk_file.endswith('.lpkx'):
             f = open(lpk_file, 'rb')
         else:
-            raise ValueError('File must be an ArcGIS Layer Package with a .lpk extension')
+            raise ValueError('File must be an ArcGIS Layer Package with a .lpk or .lpkx extension')
 
         filename = os.path.basename(lpk_file)
 
