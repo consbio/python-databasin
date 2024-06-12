@@ -25,5 +25,7 @@ jobs:
           poetry env use system
           poetry install --no-root
       - name: Build and publish
+        env:
+          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
         run: |
           poetry publish --build
